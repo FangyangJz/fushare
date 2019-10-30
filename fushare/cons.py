@@ -3,17 +3,16 @@ import datetime
 import json
 import os
 
-market_var = {'cffex': ['IF','IC','IH','T','TF','TS'],
-'dce':['C','CS','A','B','M','Y','P','FB','BB','JD','L','V','PP','J','JM','I','EG'],
-'czce':['WH','PM','CF','SR','TA','OI','RI','MA','ME','FG','RS','RM','ZC','JR','LR','SF','SM','WT','TC','GN','RO','ER','SRX','SRY','WSX','WSY','CY','AP'],
-'shfe':['CU','AL','ZN','PB','NI','SN','AU','AG','RB','WR','HC','FU','BU','RU','SC','SP']
-}
+market_var = {'cffex': ['IF', 'IC', 'IH', 'T', 'TF', 'TS'],
+              'dce': ['C', 'CS', 'A', 'B', 'M', 'Y', 'P', 'FB', 'BB', 'JD', 'L', 'V', 'PP', 'J', 'JM', 'I', 'EG'],
+              'czce': ['WH', 'PM', 'CF', 'SR', 'TA', 'OI', 'RI', 'MA', 'ME', 'FG', 'RS', 'RM', 'ZC', 'JR', 'LR', 'SF',
+                       'SM', 'WT', 'TC', 'GN', 'RO', 'ER', 'SRX', 'SRY', 'WSX', 'WSY', 'CY', 'AP'],
+              'shfe': ['CU', 'AL', 'ZN', 'PB', 'NI', 'SN', 'AU', 'AG', 'RB', 'WR', 'HC', 'FU', 'BU', 'RU', 'SC', 'SP']
+              }
+markets = list(market_var.keys())
 
-vars=[]
+vars = []
 [vars.extend(i) for i in market_var.values()]
-
-
-
 
 headers = {'Host': 'www.czce.com.cn',
            'Connection': 'keep-alive',
@@ -53,23 +52,34 @@ CZCE_DAILY_URL_1 = 'http://www.czce.com.cn/cn/exchange/jyxx/hq/hq%s.html'
 CZCE_DAILY_URL_2 = 'http://www.czce.com.cn/cn/exchange/%s/datadaily/%s.txt'
 CZCE_DAILY_URL_3 = 'http://www.czce.com.cn/cn/DFSStaticFiles/Future/%s/%s/FutureDataDaily.txt'
 
+COMMODITY_MIN_URL = 'http://stock2.finance.sina.com.cn/futures/api/json.php/IndexService.getInnerFuturesMiniKLine{}?symbol={}'
+COMMODITY_DAILY_URL = 'http://stock2.finance.sina.com.cn/futures/api/json.php/IndexService.getInnerFuturesDailyKLine{}?symbol={}'
+FINANCIAL_MIN_URL = 'http://stock2.finance.sina.com.cn/futures/api/json.php/CffexFuturesService.getCffexFuturesMiniKLine{}?symbol={}'
+FINANCIAL_DAILY_URL = 'http://stock2.finance.sina.com.cn/futures/api/json.php/CffexFuturesService.getCffexFuturesDailyKLine{}?symbol={}'
 
 DATE_PATTERN = re.compile(r'^([0-9]{4})[-/]?([0-9]{2})[-/]?([0-9]{2})')
 FUTURE_SYMBOL_PATTERN = re.compile(r'(^[A-Za-z]{1,2})[0-9]+')
 
-
-CFFEX_COLUMNS = ['open','high','low','volume','turnover','open_interest','close','settle','change1','change2']
-CZCE_COLUMNS = ['pre_settle','open','high','low','close','settle','change1','change2','volume','open_interest','oi_chg','turnover','final_settle']
-CZCE_COLUMNS_2 = ['pre_settle','open','high','low','close','settle','change1','volume','open_interest','oi_chg','turnover','final_settle']
-SHFE_COLUMNS =  {'CLOSEPRICE': 'close',  'HIGHESTPRICE': 'high', 'LOWESTPRICE': 'low', 'OPENINTEREST': 'open_interest', 'OPENPRICE': 'open',  'PRESETTLEMENTPRICE': 'pre_settle', 'SETTLEMENTPRICE': 'settle',  'VOLUME': 'volume'}
+CFFEX_COLUMNS = ['open', 'high', 'low', 'volume', 'turnover', 'open_interest', 'close', 'settle', 'change1', 'change2']
+CZCE_COLUMNS = ['pre_settle', 'open', 'high', 'low', 'close', 'settle', 'change1', 'change2', 'volume', 'open_interest',
+                'oi_chg', 'turnover', 'final_settle']
+CZCE_COLUMNS_2 = ['pre_settle', 'open', 'high', 'low', 'close', 'settle', 'change1', 'volume', 'open_interest',
+                  'oi_chg', 'turnover', 'final_settle']
+SHFE_COLUMNS = {'CLOSEPRICE': 'close', 'HIGHESTPRICE': 'high', 'LOWESTPRICE': 'low', 'OPENINTEREST': 'open_interest',
+                'OPENPRICE': 'open', 'PRESETTLEMENTPRICE': 'pre_settle', 'SETTLEMENTPRICE': 'settle',
+                'VOLUME': 'volume'}
 SHFE_VWAP_COLUMNS = {':B1': 'date', 'INSTRUMENTID': 'symbol', 'TIME': 'time_range', 'REFSETTLEMENTPRICE': 'vwap'}
-DCE_COLUMNS = ['open', 'high', 'low', 'close', 'pre_settle', 'settle', 'change1','change2','volume','open_interest','oi_chg','turnover']
-DCE_OPTION_COLUMNS = ['open', 'high', 'low', 'close', 'pre_settle', 'settle', 'change1', 'change2', 'delta', 'volume', 'open_interest', 'oi_chg', 'turnover', 'exercise_volume']
+DCE_COLUMNS = ['open', 'high', 'low', 'close', 'pre_settle', 'settle', 'change1', 'change2', 'volume', 'open_interest',
+               'oi_chg', 'turnover']
+DCE_OPTION_COLUMNS = ['open', 'high', 'low', 'close', 'pre_settle', 'settle', 'change1', 'change2', 'delta', 'volume',
+                      'open_interest', 'oi_chg', 'turnover', 'exercise_volume']
 
-OUTPUT_COLUMNS = ['symbol', 'date', 'open', 'high', 'low', 'close', 'volume', 'open_interest', 'turnover', 'settle', 'pre_settle', 'variety']
-OPTION_OUTPUT_COLUMNS = ['symbol', 'date', 'open', 'high', 'low', 'close', 'pre_settle', 'settle', 'delta', 'volume', 'open_interest', 'oi_chg', 'turnover', 'implied_volatility', 'exercise_volume', 'variety']
+OUTPUT_COLUMNS = ['symbol', 'date', 'open', 'high', 'low', 'close', 'volume', 'open_interest', 'turnover', 'settle',
+                  'pre_settle', 'variety']
+OPTION_OUTPUT_COLUMNS = ['symbol', 'date', 'open', 'high', 'low', 'close', 'pre_settle', 'settle', 'delta', 'volume',
+                         'open_interest', 'oi_chg', 'turnover', 'implied_volatility', 'exercise_volume', 'variety']
 
-DCE_MAP =  {
+DCE_MAP = {
     '豆一': 'A',
     '豆二': 'B',
     '豆粕': 'M',
@@ -86,7 +96,7 @@ DCE_MAP =  {
     '焦炭': 'J',
     '焦煤': 'JM',
     '铁矿石': 'I',
-    '乙二醇':'EG'
+    '乙二醇': 'EG'
 }
 
 
@@ -115,6 +125,7 @@ def getJsonPath(name, moduleFile):
     moduleJsonPath = os.path.join(moduleFolder, '.', name)
     return moduleJsonPath
 
+
 def get_calendar():
     """
     获取交易日历至2018年结束
@@ -122,10 +133,10 @@ def get_calendar():
     """
     settingFileName = 'calendar.json'
     settingfilePath = getJsonPath(settingFileName, __file__)
-    return json.load(open(settingfilePath,"r"))
+    return json.load(open(settingfilePath, "r"))
+
 
 def lastTradingDay(d):
-
     """
     获取前一个交易日
     :param d:           '%Y%m%d' or  datetime.date()
@@ -133,7 +144,7 @@ def lastTradingDay(d):
     """
     calendar = get_calendar()
 
-    if isinstance(d,(str)):
+    if isinstance(d, (str)):
         if d not in calendar:
             print('Today is not tradingday：' + d)
             return False
@@ -141,15 +152,16 @@ def lastTradingDay(d):
         lastday = calendar[Pos - 1]
         return lastday
 
-    elif isinstance(d,(datetime.date)):
+    elif isinstance(d, (datetime.date)):
         d_str = d.strftime('%Y%m%d')
         if d_str not in calendar:
             print('Today is not workingday：' + d_str)
             return False
         Pos = calendar.index(d_str)
         lastday = calendar[Pos - 1]
-        lastday = datetime.datetime.strptime(lastday,'%Y%m%d').date()
+        lastday = datetime.datetime.strptime(lastday, '%Y%m%d').date()
         return lastday
+
 
 def get_latestDataDate(d):
     """
@@ -166,11 +178,10 @@ def get_latestDataDate(d):
             return lastTradingDay(d.strftime('%Y%m%d'))
     else:
         while d.strftime('%Y%m%d') not in calendar:
-            d = d - datetime.timedelta(days = 1)
+            d = d - datetime.timedelta(days=1)
         return d.strftime('%Y%m%d')
 
 
-
 if __name__ == '__main__':
-    d = datetime.datetime(2018,10,5,17,1,0)
+    d = datetime.datetime(2018, 10, 5, 17, 1, 0)
     print(get_latestDataDate(d))

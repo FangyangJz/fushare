@@ -127,6 +127,11 @@ from fushare.dailyBar import (get_cffex_daily,
                               get_dce_daily,
                               get_future_daily)
 
+""" 
+期货历史数据 Bar 
+"""
+from fushare.dailyBar_sp import get_future_daily_sp
+
 """
 发邮件模块
 """
